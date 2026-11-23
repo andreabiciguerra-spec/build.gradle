@@ -27,9 +27,25 @@ jobs:
 
       - name: Compilar
         working-directory: ${{ env.MOD_DIR }}
-        run: gradle build --no-daemon
+        run: |
+          set +e
+          gradle build --no-daemon --stacktrace > build.log 2>&1
+          code=$?
+          {
+            echo '## Errores del build'
+            echo '```'
+            grep -E "error:|What went wrong|Could not|Execution failed|symbol:|location:" -A3 build.log | head -80
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
+          exit $code
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-log
+          path: ${{ env.MOD_DIR }}/build.log
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ben10-mod-jar
+          name: omnitrix-ultimate-jar
           path: ${{ env.MOD_DIR }}/build/libs/*.jar
