@@ -1,0 +1,35 @@
+name: Build mod
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Descomprimir el mod
+        run: |
+          unzip -oq ./*.zip -d mod
+          echo "MOD_DIR=$(dirname "$(find mod -name build.gradle | head -1)")" >> $GITHUB_ENV
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 4.10.3
+          cache-disabled: true
+
+      - name: Compilar
+        working-directory: ${{ env.MOD_DIR }}
+        run: gradle build --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ben10-mod-jar
+          path: ${{ env.MOD_DIR }}/build/libs/*.jar
